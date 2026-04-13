@@ -2,5 +2,6 @@ accounts:
   - account_id: "acc_01"
     strategy: "conservative"
     enabled: true
-    user_data_dir: "C:\\Users\\Admin\\AppData\\Local\\Google\\Chrome\\User Data"
-    profile_dir: "Profile 230"
+    user_data_dir: "E:\\ToolAir\\tiktok_human_chrome\\chrome-profile-debug"
+    profile_dir: ""
+    debug_port: 9222

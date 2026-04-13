@@ -26,7 +26,7 @@ class Config:
     LIKE_RATE = float(os.getenv('LIKE_RATE', 0.08))
     FOLLOW_RATE = float(os.getenv('FOLLOW_RATE', 0.01))
     SHARE_RATE = float(os.getenv('SHARE_RATE', 0.002))
-    COMMENT_RATE = float(os.getenv('COMMENT_RATE', 0.00))
+    COMMENT_RATE = float(os.getenv('COMMENT_RATE', 0.08))
 
     # Scroll
     SCROLL_MIN = int(os.getenv('SCROLL_MIN', 200))
@@ -46,11 +46,19 @@ class Config:
     SAVE_SESSION = True     # Không dùng, giữ cho tương thích
 
     # Cross‑follow
-    OPEN_COMMENTS_RATE = float(os.getenv('OPEN_COMMENTS_RATE', 0.8))
+    OPEN_COMMENTS_RATE = float(os.getenv('OPEN_COMMENTS_RATE', 0.08))
     MAX_COMMENTS_TO_SCAN = int(os.getenv('MAX_COMMENTS_TO_SCAN', 15))
     AUTO_REPLY_TO_CROSS_FOLLOW = os.getenv('AUTO_REPLY_TO_CROSS_FOLLOW', 'true').lower() == 'true'
     AUTO_FOLLOW_CROSS_FOLLOW = os.getenv('AUTO_FOLLOW_CROSS_FOLLOW', 'true').lower() == 'true'
     MAX_COMMENT_SCROLLS = int(os.getenv('MAX_COMMENT_SCROLLS', 30))
+
+    SCROLL_MODE = os.getenv('SCROLL_MODE', 'scroll').lower()
+    SCROLL_DISTANCE_MIN = int(os.getenv('SCROLL_DISTANCE_MIN', 800))
+    SCROLL_DISTANCE_MAX = int(os.getenv('SCROLL_DISTANCE_MAX', 1200))
+
+    KEEP_COMMENTS_OPEN = os.getenv('KEEP_COMMENTS_OPEN', 'true').lower() == 'true'
+    COMMENT_ALREADY_OPEN = os.getenv('COMMENT_ALREADY_OPEN', 'false').lower() == 'true'
+    AUTO_REPLY_TO_CROSS_FOLLOW = os.getenv('AUTO_REPLY_TO_CROSS_FOLLOW', 'false').lower() == 'true'
 
     @classmethod
     def get_strategy_weights(cls, strategy='normal'):

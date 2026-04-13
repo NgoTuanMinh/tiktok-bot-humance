@@ -3,6 +3,7 @@ import time
 import requests
 import os
 import socket
+import psutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 from typing import Optional, Tuple
@@ -27,6 +28,17 @@ class BrowserManager:
         port = sock.getsockname()[1]
         sock.close()
         return port
+
+    def _kill_chrome_processes(self):
+        """Kill tất cả tiến trình Chrome để giải phóng profile"""
+        for proc in psutil.process_iter(['pid', 'name']):
+            if proc.info['name'] == 'chrome.exe':
+                try:
+                    proc.kill()
+                except:
+                    pass
+        time.sleep(2)
+        print("[OK] Killed all Chrome processes")
 
     def _launch_chrome(self):
         chrome_paths = [
@@ -71,7 +83,8 @@ class BrowserManager:
             shell=False
         )
 
-        for _ in range(15):
+        # Đợi Chrome mở cổng, tăng timeout lên 30 giây
+        for attempt in range(30):
             time.sleep(1)
             try:
                 resp = requests.get(f"http://localhost:{self.debug_port}/json/version", timeout=2)
@@ -91,24 +104,47 @@ class BrowserManager:
         self.page = self.context.pages[0] if self.context.pages else self.context.new_page()
 
     def launch(self) -> Tuple:
-        print(f"🚀 Launching Chrome for {self.account_id}")
+        print(f"[START] Launching Chrome for {self.account_id}")
+        self._kill_chrome_processes()
         self._launch_chrome()
         self._connect_playwright()
         if "tiktok.com" not in self.page.url:
-            self.page.goto("https://www.tiktok.com/foryou", wait_until="domcontentloaded")
+            self.page.goto("https://www.tiktok.com/search?q=fl%20ch%C3%A9o&t=1776085176601", wait_until="domcontentloaded")
+            # self.page.goto("https://www.tiktok.com/foryou", wait_until="domcontentloaded")
             time.sleep(3)
         return self.browser, self.context, self.page
 
     def close(self):
-        if self.page:
-            self.page.close()
-        if self.context:
-            self.context.close()
-        if self.browser:
-            self.browser.close()
-        if self.playwright:
-            self.playwright.stop()
-        if self.chrome_process:
-            self.chrome_process.terminate()
-            self.chrome_process = None
+        print(f"[Closing] {self.account_id}")
+        # Đóng page
+        if hasattr(self, 'page') and self.page:
+            try:
+                if not self.page.is_closed():
+                    self.page.close()
+            except:
+                pass
+        # Đóng context
+        if hasattr(self, 'context') and self.context:
+            try:
+                self.context.close()
+            except:
+                pass
+        # Đóng browser
+        if hasattr(self, 'browser') and self.browser:
+            try:
+                self.browser.close()
+            except:
+                pass
+        # Dừng playwright
+        if hasattr(self, 'playwright') and self.playwright:
+            try:
+                self.playwright.stop()
+            except:
+                pass
+        # Tắt Chrome process (nếu có)
+        if hasattr(self, 'chrome_process') and self.chrome_process:
+            try:
+                self.chrome_process.terminate()
+            except:
+                pass
         print(f"[Closed] {self.account_id}")

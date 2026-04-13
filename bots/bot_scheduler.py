@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 from bots.tiktok_bot import TikTokBot
 from utils.logger import get_main_logger
+from config.settings import Config
 
 class BotScheduler:
     def __init__(self):
@@ -22,22 +23,26 @@ class BotScheduler:
 
     def run_sequential(self):
         for acc in self.accounts:
-            self.logger.info(f"Starting account {acc['account_id']}")
-            bot = TikTokBot(
-                account_id=acc['account_id'],
-                strategy=acc.get('strategy', 'normal'),
-                proxy=None,   # có thể mở rộng
-                user_data_dir=acc.get('user_data_dir'),
-                profile_dir=acc.get('profile_dir')
-            )
+            bot = None
             try:
+                bot = TikTokBot(
+                    account_id=acc['account_id'],
+                    strategy=acc.get('strategy', 'normal'),
+                    proxy=None,
+                    user_data_dir=acc.get('user_data_dir'),
+                    profile_dir=acc.get('profile_dir')
+                )
                 if bot.start():
                     bot.run_session()
             except Exception as e:
                 self.logger.error(f"Bot failed: {e}")
             finally:
-                bot.browser_manager.close()
-            time.sleep(30)  # nghỉ giữa các account
+                if bot and hasattr(bot, 'browser_manager'):
+                    try:
+                        bot.browser_manager.close()
+                    except Exception as e:
+                        self.logger.error(f"Error closing browser: {e}")
+            time.sleep(Config.BREAK_BETWEEN_ACCOUNTS)
         self.logger.info("All accounts finished")
 
     def run(self):

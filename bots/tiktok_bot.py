@@ -6,6 +6,7 @@ from core.browser_manager import BrowserManager
 from core.human_actions import HumanActions
 from core.comment_monitor import RobustCommentMonitor
 from utils.logger import get_logger
+from config.settings import Config
 
 class TikTokBot:
     def __init__(self, account_id: str, strategy: str = 'normal', proxy: str = None,
@@ -69,7 +70,6 @@ class TikTokBot:
             if self.stats['actions_this_hour'] % 30 == 0 and self.stats['actions_this_hour'] > 0:
                 self._show_stats()
         self._show_final_stats()
-        self.browser_manager.close()
 
     def _perform_action(self):
         if self._processing_comments:
@@ -80,13 +80,25 @@ class TikTokBot:
             ('like', self.weights['like_rate']),
             ('follow', self.weights['follow_rate']),
             ('share', Config.SHARE_RATE),
-            ('open_comments', 0.10)
+            ('open_comments', Config.COMMENT_RATE)
         ]
         actions = [(a, w) for a, w in actions if w > 0]
         action = random.choices([a[0] for a in actions], weights=[a[1] for a in actions])[0]
 
         if action == 'scroll':
-            self.human.scroll_natural(distance=random.randint(Config.SCROLL_MIN, Config.SCROLL_MAX))
+            direction = random.choices(['down', 'up'], weights=[0.95, 0.05])[0]
+            if Config.SCROLL_MODE == 'arrow':
+                if direction == 'down':
+                    success = self.human.click_next_arrow()
+                else:
+                    success = self.human.click_prev_arrow()
+                if not success:
+                    self.logger.debug("Arrow button not found, fallback to scroll")
+                    distance = random.randint(Config.SCROLL_DISTANCE_MIN, Config.SCROLL_DISTANCE_MAX)
+                    self.human.scroll_natural(distance=distance, direction=direction)
+            else:
+                distance = random.randint(Config.SCROLL_DISTANCE_MIN, Config.SCROLL_DISTANCE_MAX)
+                self.human.scroll_natural(distance=distance, direction=direction)
             self.stats['scrolls'] += 1
         elif action == 'watch':
             self.human.watch_video(*self.weights['watch_time_range'])
